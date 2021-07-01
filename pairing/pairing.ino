@@ -6,7 +6,7 @@
   *   AT+ROLE=1
   *   AT+PSWD="0000"
   *   AT+CMODE=0
-  *   AT+BIND=<Address>  ( 1234,56,ABCDEF )
+  *   AT+BIND=<Address>  ( 1234,56,ABCDEF )  2068,9D,79D995
   *   AT+IAC=9E8B33
   *   AT+CLASS=0
   *   AT+INQM=1,9,48
@@ -18,7 +18,7 @@
 
 
 #include <SoftwareSerial.h>
-SoftwareSerial BT(11,10);
+SoftwareSerial BT(11,10); //Rx/Tx
  
 void setup(){
   BT.begin(38400);
