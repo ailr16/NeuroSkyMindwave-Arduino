@@ -4,15 +4,13 @@
 // This is example code provided by NeuroSky, Inc. and is provided
 // license free.
 //
-// This modification allows view data trough serial monitor
+// This modification allows control devices through PWM
 // Lozano Ramirez Angel Ivan
-// Mexico  2.07.2021
+// Mexico  4.07.2021
 ////////////////////////////////////////////////////////////////////////
 
-#include <SoftwareSerial.h>
-SoftwareSerial BT(4,2); //Rx/Tx
-
 #define LED 13
+#define output 11
 #define BAUDRATE 57600
 #define DEBUGOUTPUT 0
 
@@ -34,8 +32,8 @@ boolean bigPacket = false;
 //////////////////////////
 void setup(){
   pinMode(LED, OUTPUT);
-  BT.begin(BAUDRATE);           // Software serial port  (ATMEGA328P)
-  Serial.begin(BAUDRATE);           // USB
+  pinMode(output, OUTPUT);
+  Serial.begin(BAUDRATE);
 }
 
 ////////////////////////////////
@@ -43,13 +41,8 @@ void setup(){
 ////////////////////////////////
 byte ReadOneByte() {
   int ByteRead;
-  while(!BT.available());
-  ByteRead = BT.read();
-
-  #if DEBUGOUTPUT  
-    Serial.print((char)ByteRead);   // echo the same byte out the USB serial (for debug purposes)
-  #endif
-
+  while(!Serial.available());
+  ByteRead = Serial.read();
   return ByteRead;
 }
 
@@ -58,12 +51,10 @@ byte ReadOneByte() {
 /////////////
 void loop() {
   // Look for sync bytes
-  if(ReadOneByte() == 170) {
-    if(ReadOneByte() == 170) {
+  if(ReadOneByte() == 170){
+    if(ReadOneByte() == 170){
       payloadLength = ReadOneByte();
-      if(payloadLength > 169)                      //Payload length can not be greater than 169
-      return;
-
+      if(payloadLength > 169) return;                      //Payload length can not be greater than 169
       generatedChecksum = 0;        
       for(int i = 0; i < payloadLength; i++) {  
         payloadData[i] = ReadOneByte();            //Read payload into memory
@@ -72,9 +63,7 @@ void loop() {
 
       checksum = ReadOneByte();                      //Read checksum byte from stream      
       generatedChecksum = 255 - generatedChecksum;   //Take one's compliment of generated checksum
-
-        if(checksum == generatedChecksum) {    
-
+      if(checksum == generatedChecksum) {    
         poorQuality = 200;
         attention = 0;
         meditation = 0;
@@ -104,22 +93,18 @@ void loop() {
             break;
           } // switch
         } // for loop
-
-#if !DEBUGOUTPUT
-        // *** Add your code here ***
-        if(bigPacket) {
-          if(poorQuality == 0)  digitalWrite(LED, HIGH);
-          else  digitalWrite(LED, LOW);
-          Serial.print("Attention: ");
-          Serial.print(attention);
-          Serial.print("\n");
+        #if !DEBUGOUTPUT
+            // *** Add your code here ***
+          if(bigPacket) {
+            if(poorQuality == 0)  digitalWrite(LED, HIGH);
+            else digitalWrite(LED, LOW);
+            
+            analogWrite(output, (int)attention);
+           }                     
         }
-#endif        
+        #endif      
         bigPacket = false;        
       }
-      else {
-        // Checksum Error
-      }  // end if else for checksum
+      else; // Checksum Error
     } // end if read 0xAA byte
-  } // end if read 0xAA byte
-}
+} // end if read 0xAA byte
